@@ -7,7 +7,6 @@
 <link rel="import" href="../iron-collapse/iron-collapse.html">
 
 <link rel="import" href="../oc-option-sets-list/oc-option-sets-list.html">
-<link rel="import" href="../oc-product-option-api/oc-product-option-api.html">
 
 <!--
 `oc-edit-option`
@@ -29,32 +28,28 @@ Element for editing an option
 
   <template>
     <paper-material>
-      <paper-input id="nameInput" label="Name"></paper-input>
-      <paper-input id="descriptionInput" label="Description"></paper-input>
-      <paper-input id="priceInput" label="Price"></paper-input>
-      <iron-label>
-        <span>Unlocks Options</span>
-        <paper-button id="editUnlockOptions" on-tap="_unlockOptionsTapped">SomeOptionSet; Another Option Set; And So On</paper-button>
-      </iron-label>
+      <paper-input id="nameInput" label="Name">[[ _optionName ]]</paper-input>
+      <paper-input id="descriptionInput" label="Description">[[ _optionDescription ]]</paper-input>
+      <paper-input id="priceInput" label="Price">[[ _optionPrice ]]</paper-input>
+      <div>Unlocks Options</div>
+      <paper-button id="unlockOptionSetsSummary" on-tap="_unlockOptionsTapped">Add some</paper-button>
       <iron-collapse opened$="[[ _showOptionSetsList ]]">
         <oc-option-sets-list
-          id="optionSetsList"
-          organisation-id="[[ organisationId ]]"
-          loading="{{ loading }}"
-          on-create="_onCreateOptionSet"
-          on-edit="_onEditOptionSet"
+                id="optionSetsList"
+                actions-hidden
+                on-page-changed="_onOptionSetsPageChange"
+                multiselect
+                on-item-selected="_onOptionSetSelected"
+                on-item-deselected="_onOptionSetDeselected"
         ></oc-option-sets-list>
       </iron-collapse>
-      <iron-label>
-        <span>Unlocks Extras</span>
-        <paper-button id="editUnlockExtras" on-tap="_unlockExtrasTapped">Expand</paper-button>
-      </iron-label>
+      <div>Unlocks Extras</div>
+      <paper-button id="unlockExtraSetsSummary" on-tap="_unlockExtrasTapped">Add Some</paper-button>
       <iron-collapse opened$="[[ _showExtraSetsList ]]">
         <div>TODO</div>
       </iron-collapse>
+      <paper-button on-tap="_saveTapped" >Save</paper-button>
     </paper-material>
-
-    <oc-product-option-api id="optionsApi"></oc-product-option-api>
   </template>
 
   <script>
@@ -63,12 +58,45 @@ Element for editing an option
       is: 'oc-edit-option',
 
       properties: {
-        organisationId: Number,
-        loading: {
-          type: Boolean,
-          value: false,
-          notify: true
-        }
+      },
+
+      observers: [
+        'refresh(organisationId, optionId)'
+      ],
+
+      setOption: function(option) {
+        this._option = option;
+        this.$.nameInput.value = option.name;
+        this.$.descriptionInput.value = option.description;
+        this.$.priceInput.value = option.price;
+        this._setUnlockOptionSetsSummary(this._option.unlockOptionSets);
+        this._setUnlockExtraSetsSummary(this._option.unlockExtraSets);
+      },
+
+      _setUnlockOptionSetsSummary: function(unlockOptionSets) {
+        this.$.unlockOptionSetsSummary.value = unlockOptionSets.reduce(
+                function(prevValue, currentValue, currentIndex, array) {
+                  return prevValue + "; " + currentValue;
+                });
+      },
+
+      _setUnlockExtraSetsSummary: function(unlockExtraSets) {
+        this.$.unlockExtraSetsSummary.value = unlockExtraSets.reduce(
+                function(prevValue, currentValue, currentIndex, array) {
+                  return prevValue + "; " + currentValue;
+                });
+      },
+
+      _setOptionSetItems(optionSetItems, totalItems, page) {
+        // ToDo: select the ones in this._option.unlockOptionSets
+        this.$.optionSetsList.setItems(optionSetItems);
+        this.$.optionSetsList.setTotalItems(totalItems);
+        this.$.optionSetsList.setPage(page);
+      },
+
+      _setExtraSetItems(extraSetItems, totalItems, page) {
+        // ToDo
+        // ToDo: select the ones in this._option.unlockOptionSets
       },
 
       _unlockOptionsTapped: function() {
@@ -77,8 +105,39 @@ Element for editing an option
 
       _unlockExtrasTapped: function() {
         this._showExtraSetsList = !this._showExtraSetsList;
-      }
+      },
 
+      _onOptionSetsPageChange: function(event) {
+        this.fire('unlock-option-sets-page-changed')
+      },
+
+      _onOptionSetSelected: function(event) {
+        this._option.unlockOptionSets.push(event.detail);
+        this._setUnlockOptionSetsSummary(this._option.unlockOptionSets);
+      },
+
+      _onOptionSetDeselected: function(event) {
+        this._option.unlockOptionSets.remove(event.detail);
+        this._setUnlockOptionSetsSummary(this._option.unlockOptionSets);
+      },
+
+      _onExtraSetsPageChange: function(event) {
+        this.fire('unlock-extra-sets-page-changed')
+      },
+
+      _onExtraSetSelected: function(event) {
+      },
+
+      _onExtraSetDeselected: function(event) {
+      },
+
+      _saveTapped: function() {
+        this.fire('save');
+      },
+
+      getOption: function() {
+        return this._option;
+      }
 
     });
   </script>
