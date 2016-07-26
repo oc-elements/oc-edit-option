@@ -1,0 +1,85 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-material/paper-material.html">
+<link rel="import" href="../paper-button/paper-button.html">
+
+<link rel="import" href="../iron-label/iron-label.html">
+<link rel="import" href="../iron-collapse/iron-collapse.html">
+
+<link rel="import" href="../oc-option-sets-list/oc-option-sets-list.html">
+<link rel="import" href="../oc-product-option-api/oc-product-option-api.html">
+
+<!--
+`oc-edit-option`
+Element for editing an option
+
+@demo demo/index.html 
+-->
+
+<dom-module id="oc-edit-option">
+  <style>
+    :host {
+      display: block;
+    }
+    paper-material {
+      background-color: #fff;
+      padding: 10px;
+    }
+  </style>
+
+  <template>
+    <paper-material>
+      <paper-input id="nameInput" label="Name"></paper-input>
+      <paper-input id="descriptionInput" label="Description"></paper-input>
+      <paper-input id="priceInput" label="Price"></paper-input>
+      <iron-label>
+        <span>Unlocks Options</span>
+        <paper-button id="editUnlockOptions" on-tap="_unlockOptionsTapped">SomeOptionSet; Another Option Set; And So On</paper-button>
+      </iron-label>
+      <iron-collapse opened$="[[ _showOptionSetsList ]]">
+        <oc-option-sets-list
+          id="optionSetsList"
+          organisation-id="[[ organisationId ]]"
+          loading="{{ loading }}"
+          on-create="_onCreateOptionSet"
+          on-edit="_onEditOptionSet"
+        ></oc-option-sets-list>
+      </iron-collapse>
+      <iron-label>
+        <span>Unlocks Extras</span>
+        <paper-button id="editUnlockExtras" on-tap="_unlockExtrasTapped">Expand</paper-button>
+      </iron-label>
+      <iron-collapse opened$="[[ _showExtraSetsList ]]">
+        <div>TODO</div>
+      </iron-collapse>
+    </paper-material>
+
+    <oc-product-option-api id="optionsApi"></oc-product-option-api>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'oc-edit-option',
+
+      properties: {
+        organisationId: Number,
+        loading: {
+          type: Boolean,
+          value: false,
+          notify: true
+        }
+      },
+
+      _unlockOptionsTapped: function() {
+        this._showOptionSetsList = !this._showOptionSetsList;
+      },
+
+      _unlockExtrasTapped: function() {
+        this._showExtraSetsList = !this._showExtraSetsList;
+      }
+
+
+    });
+  </script>
+</dom-module>

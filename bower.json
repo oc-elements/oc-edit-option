@@ -1,0 +1,21 @@
+{
+  "name": "oc-edit-option",
+  "description": "Element for editing an option",
+  "main": "oc-edit-option.html",
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.4.0",
+    "paper-input": "PolymerElements/paper-input#^1.1.15",
+    "iron-collapse": "PolymerElements/iron-collapse#^1.2.0",
+    "oc-product-option-api": "git://github.com/oc-elements/oc-product-option-api#1.x",
+    "paper-material": "PolymerElements/paper-material#^1.0.6",
+    "paper-button": "PolymerElements/paper-button#^1.0.12",
+    "iron-label": "PolymerElements/iron-label#^1.0.2",
+    "oc-option-sets-list": "git://github.com/oc-elements/oc-option-sets-list#1.x"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "web-component-tester": "^4.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+  }
+}
