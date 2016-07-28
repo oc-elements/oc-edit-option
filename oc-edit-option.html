@@ -32,15 +32,19 @@ Element for editing an option
       <paper-input id="descriptionInput" label="Description">[[ _optionDescription ]]</paper-input>
       <paper-input id="priceInput" label="Price">[[ _optionPrice ]]</paper-input>
       <div>Unlocks Options</div>
-      <paper-button id="unlockOptionSetsSummary" on-tap="_unlockOptionsTapped">Add some</paper-button>
+      <paper-button id="unlockOptionSetsSummary" on-tap="_unlockOptionsTapped">[[ _unlocksOptionsSetsSummary ]]</paper-button>
       <iron-collapse opened$="[[ _showOptionSetsList ]]">
         <oc-option-sets-list
                 id="optionSetsList"
+                loading="{{ _optionSetsLoading }}"
+                items="[[ optionSetsItems ]]"
+                total-items="[[ optionSetsTotalItems ]]"
+                page-size="[[ optionSetsPageSize ]]"
+                current-page="[[ optionSetsCurrentPage ]]"
+                on-async-page-request="_onOptionSetPageRequest"
+                selected-items="{{ _selectedUnlockOptionSets }}"
                 actions-hidden
-                on-page-changed="_onOptionSetsPageChange"
-                multiselect
-                on-item-selected="_onOptionSetSelected"
-                on-item-deselected="_onOptionSetDeselected"
+                multi-select
         ></oc-option-sets-list>
       </iron-collapse>
       <div>Unlocks Extras</div>
@@ -48,7 +52,9 @@ Element for editing an option
       <iron-collapse opened$="[[ _showExtraSetsList ]]">
         <div>TODO</div>
       </iron-collapse>
-      <paper-button on-tap="_saveTapped" >Save</paper-button>
+      <div>
+        <paper-button on-tap="_saveTapped">Save</paper-button>
+      </div>
     </paper-material>
   </template>
 
@@ -58,40 +64,108 @@ Element for editing an option
       is: 'oc-edit-option',
 
       properties: {
+        optionSetsItems: Array,
+        optionSetsTotalItems: Number,
+        optionSetsPageSize: Number,
+        optionSetsCurrentPage: Number
       },
-
       observers: [
-        'refresh(organisationId, optionId)'
+        '_unlockOptionSetsChanged(_selectedUnlockOptionSets.*)',
+        '_updateOptionSetsSummary(_showOptionSetsList)',
+        '_optionSetsLoadingChanged(_optionSetsLoading)'
       ],
 
       setOption: function(option) {
         this._option = option;
-        this.$.nameInput.value = option.name;
-        this.$.descriptionInput.value = option.description;
-        this.$.priceInput.value = option.price;
+        this._refreshSelectedOptionSets = true;
+        this.$.nameInput.value = this._option.name;
+        this.$.descriptionInput.value = this._option.description;
+        this.$.priceInput.value = this._option.price;
         this._setUnlockOptionSetsSummary(this._option.unlockOptionSets);
         this._setUnlockExtraSetsSummary(this._option.unlockExtraSets);
       },
 
+      _optionSetsLoadingChanged(loading) {
+        if (loading) {
+          this._refreshSelectedOptionSets = true;
+        } else {
+          if (this._option && this._refreshSelectedOptionSets) {
+            for (var i in this._option.unlockOptionSets) {
+              this.$.optionSetsList.selectItem(
+                      this.optionSetsItems.findIndex(
+                              function (element, index, array) {
+                                return element.id === this._option.unlockOptionSets[i].id;
+                              }.bind(this)
+                      ));
+            }
+            this._refreshSelectedOptionSets = false;
+          }
+        }
+      },
+
+      _unlockOptionSetsChanged: function(selectedUnlockOptionSets) {
+        if (this._option && !this._refreshSelectedOptionSets) {
+          this._updateUnlockOptionSets(Array.from(selectedUnlockOptionSets.base));
+          this._setUnlockOptionSetsSummary(this._option.unlockOptionSets);
+        }
+      },
+
+      _updateUnlockOptionSets: function(selectedOptionSets) {
+
+        for (var i in selectedOptionSets) {
+          if (!this._option.unlockOptionSets.find(
+                          function (existingItem, index, array) {
+                            return selectedOptionSets[i].id === existingItem.id ? existingItem : null;
+                          })) {
+            this._option.unlockOptionSets.push(selectedOptionSets[i]);
+            this.fire('add-unlock-option-set', selectedOptionSets[i]);
+          }
+        }
+
+        var toRemove = [];
+        for (var i in this._option.unlockOptionSets) {
+          if (!selectedOptionSets.find(
+                          function (existingItem, index, array) {
+                            return this._option.unlockOptionSets[i].id === existingItem.id ? existingItem : null;}.bind(this))) {
+            toRemove.push(this._option.unlockOptionSets[i]);
+            this.fire('remove-unlock-option-set', this._option.unlockOptionSets[i]);
+          }
+        }
+
+        this._option.unlockOptionSets =
+                this._option.unlockOptionSets.filter(
+                        function (element, index, array) {
+                          return !toRemove.some(function (item, index, array) {
+                            return element.id === item.id;
+                          })
+                        });
+      },
+
       _setUnlockOptionSetsSummary: function(unlockOptionSets) {
-        this.$.unlockOptionSetsSummary.value = unlockOptionSets.reduce(
+        this._unlocksOptionsSetsSummary = unlockOptionSets.reduce(
                 function(prevValue, currentValue, currentIndex, array) {
-                  return prevValue + "; " + currentValue;
-                });
+                  return prevValue + "[" + currentValue.displayName + "] ";
+                }, "");
+        this._updateOptionSetsSummary(this._showOptionSetsList);
+      },
+
+      _updateOptionSetsSummary: function(optionSetsListShown) {
+        this._unlocksOptionsSetsSummary =
+                this._option.unlockOptionSets.length === 0
+                        ? optionSetsListShown
+                        ? "Collapse"
+                        : "Add Some"
+                        : this._unlocksOptionsSetsSummary;
       },
 
       _setUnlockExtraSetsSummary: function(unlockExtraSets) {
-        this.$.unlockExtraSetsSummary.value = unlockExtraSets.reduce(
+        this._unlocksExtraSets = unlockExtraSets.reduce(
                 function(prevValue, currentValue, currentIndex, array) {
                   return prevValue + "; " + currentValue;
-                });
-      },
-
-      _setOptionSetItems(optionSetItems, totalItems, page) {
-        // ToDo: select the ones in this._option.unlockOptionSets
-        this.$.optionSetsList.setItems(optionSetItems);
-        this.$.optionSetsList.setTotalItems(totalItems);
-        this.$.optionSetsList.setPage(page);
+                }, "");
+        if (this._unlocksExtraSets === "") {
+          this._unlocksExtraSets = "Add Some";
+        }
       },
 
       _setExtraSetItems(extraSetItems, totalItems, page) {
@@ -107,38 +181,20 @@ Element for editing an option
         this._showExtraSetsList = !this._showExtraSetsList;
       },
 
-      _onOptionSetsPageChange: function(event) {
-        this.fire('unlock-option-sets-page-changed')
-      },
-
-      _onOptionSetSelected: function(event) {
-        this._option.unlockOptionSets.push(event.detail);
-        this._setUnlockOptionSetsSummary(this._option.unlockOptionSets);
-      },
-
-      _onOptionSetDeselected: function(event) {
-        this._option.unlockOptionSets.remove(event.detail);
-        this._setUnlockOptionSetsSummary(this._option.unlockOptionSets);
+      _onOptionSetPageRequest: function(event) {
+        this.fire('unlock-option-sets-page-changed', event)
       },
 
       _onExtraSetsPageChange: function(event) {
-        this.fire('unlock-extra-sets-page-changed')
-      },
-
-      _onExtraSetSelected: function(event) {
-      },
-
-      _onExtraSetDeselected: function(event) {
+        this.fire('unlock-extra-sets-page-changed', event)
       },
 
       _saveTapped: function() {
-        this.fire('save');
+        this._option.name = this.$.nameInput.value;
+        this._option.description = this.$.descriptionInput.value;
+        this._option.price = this.$.priceInput.value;
+        this.fire('save', this._option);
       },
-
-      getOption: function() {
-        return this._option;
-      }
-
     });
   </script>
 </dom-module>
