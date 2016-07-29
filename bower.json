@@ -10,7 +10,8 @@
     "paper-material": "PolymerElements/paper-material#^1.0.6",
     "paper-button": "PolymerElements/paper-button#^1.0.12",
     "iron-label": "PolymerElements/iron-label#^1.0.2",
-    "oc-option-sets-list": "git://github.com/oc-elements/oc-option-sets-list#1.x"
+    "oc-option-sets-list": "git://github.com/oc-elements/oc-option-sets-list#1.x",
+    "paper-tags-input": "^1.2.2"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
