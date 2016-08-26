@@ -86,7 +86,7 @@ Element for editing an option
         this._setUnlockExtraSetsSummary(this._option.unlockExtraSets);
       },
 
-      _optionSetsLoadingChanged(loading) {
+      _optionSetsLoadingChanged : function(loading) {
         if (loading) {
           this._refreshSelectedOptionSets = true;
         } else {
@@ -169,7 +169,7 @@ Element for editing an option
         }
       },
 
-      _setExtraSetItems(extraSetItems, totalItems, page) {
+      _setExtraSetItems : function(extraSetItems, totalItems, page) {
         // ToDo
         // ToDo: select the ones in this._option.unlockOptionSets
       },
